@@ -32,12 +32,15 @@ Using TargetFinder
 Required arguments
 ------------
   -s     Small RNA sequence (either RNA or DNA).
+  
   -d     FASTA-formated sequence file containing potential target sequences.
 
 Optional Arguments
 ------------
   -q     Query sequence name (DEFAULT = query).
+  
   -c     Prediction score cutoff value (DEFAULT = 4).
+  
   -h     Shows the help menu.
 
 Output
@@ -59,9 +62,9 @@ symbols. A ":" (colon) symbol represents an ordinary Watson-Crick base pair, a "
 
   ex.
  
-  target  5' UAGGGCAAAUCUUCUUUGGCA 3'
-             .:::::::::::.::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
+  target  5' UAGGGCAAAUCUUCUUUGGCA 3'  
+             .:::::::::::.::::::::  
+  query   3' GUCCCGUUUAGAGGAAACCGU 5'  
  
 If a small RNA is predicted to target a sequence more than once, each target site will be output as separate output. Below is an example of output for miR399a and its target AT2G33770. miR399a has five
 target sites in the 5'UTR of AT2G33770.
