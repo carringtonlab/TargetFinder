@@ -630,12 +630,14 @@ sub get_coords {
 	while (my $line = <DB>) {
 		chomp $line;
 		if ($step == 0) {
-			if ($line =~ /\>(.+)/) {
+			#if ($line =~ /\>(.+)/) {
+			if ($line =~ /\>(.{1,94})/) {
 				$name = $1;
 				$step = 1;
 			}
 		} elsif ($step == 1) {
-			if ($line =~ /\>(.+)/ || eof(DB)) {
+			#if ($line =~ /\>(.+)/ || eof(DB)) {
+			if ($line =~ /\>(.{1,94})/ || eof(DB)) {
 				if (eof(DB)) {
 					$seq .= $line;
 				}
