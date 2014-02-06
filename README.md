@@ -22,7 +22,7 @@ Installation
 
 1.  Make sure that 'mkdir' is in your path.
 2.  Set an environmental variable 'HOME' as the location of your home directory. Note: you must have read/write access to this directory so that a temporary directory can be made.
-3.  Set an environmental variable 'FASTA34' as the location of the fasta34 binary.
+3.  Make sure that 'fasta34' is in your path.
 4.  Make sure that the required modules are in your Perl library path.
 5.  Make sure that targetfinder.pl is executable (use 'chmod' to change privileges).
 
