@@ -62,11 +62,11 @@ symbols. A ":" (colon) symbol represents an ordinary Watson-Crick base pair, a "
 
   ex.
 
-` 
+```
 target  5' UAGGGCAAAUCUUCUUUGGCA 3'  
            .:::::::::::.::::::::  
 query   3' GUCCCGUUUAGAGGAAACCGU 5'
-`  
+```
  
 If a small RNA is predicted to target a sequence more than once, each target site will be output as separate output. Below is an example of output for miR399a and its target AT2G33770. miR399a has five
 target sites in the 5'UTR of AT2G33770.
