@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #########################################################
-#  Target Finder 1.1
+#  Target Finder
 #
 #  Copyright 2007 Oregon State University
 #
@@ -31,7 +31,7 @@ targetfinder.pl - search for potential miRNA target sites in a sequence database
 
 =head1 VERSION
 
-This is version 1.2 of targetfinder.pl
+See VERSION file.
 
 =head1 REQUIREMENTS
 
@@ -633,6 +633,9 @@ sub get_coords {
 			#if ($line =~ /\>(.+)/) {
 			if ($line =~ /\>(.{1,94})/) {
 				$name = $1;
+				while ($name =~ /\s$/) {
+					$name =~ s/\s$//g;
+				}
 				$step = 1;
 			}
 		} elsif ($step == 1) {
@@ -644,6 +647,9 @@ sub get_coords {
 				$db{$name} = $seq;
 				next if (eof(DB));
 				$name = $1;
+				while ($name =~ /\s$/) {
+					$name =~ s/\s$//g;
+				}
 				undef($seq);
 			} else {
 				$seq .= $line;
