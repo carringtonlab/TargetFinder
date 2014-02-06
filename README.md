@@ -63,8 +63,8 @@ symbols. A ":" (colon) symbol represents an ordinary Watson-Crick base pair, a "
   ex.
 
 ` 
-target  5' UAGGGCAAAUCUUCUUUGGCA 3'
-           .:::::::::::.::::::::
+target  5' UAGGGCAAAUCUUCUUUGGCA 3'  
+           .:::::::::::.::::::::  
 query   3' GUCCCGUUUAGAGGAAACCGU 5'
 `  
  
