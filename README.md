@@ -61,10 +61,12 @@ The base-pairing diagram has the target site sequence on top in 5'-3' orientatio
 symbols. A ":" (colon) symbol represents an ordinary Watson-Crick base pair, a "." (period) represents a G:U base pair, and a " " (space) represents a mismatch.
 
   ex.
- 
-`target  5' UAGGGCAAAUCUUCUUUGGCA 3'`
-`           .:::::::::::.::::::::`
-`query   3' GUCCCGUUUAGAGGAAACCGU 5'`  
+
+` 
+target  5' UAGGGCAAAUCUUCUUUGGCA 3'
+           .:::::::::::.::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+`  
  
 If a small RNA is predicted to target a sequence more than once, each target site will be output as separate output. Below is an example of output for miR399a and its target AT2G33770. miR399a has five
 target sites in the 5'UTR of AT2G33770.
