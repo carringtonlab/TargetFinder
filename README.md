@@ -47,20 +47,24 @@ Output
 ------------
 targetfinder.pl writes all output to the terminal (STOUT). To save the output to a file use '>' to redirect output to a file.
 
-  ex.
+  example:
 
-  ./targetfinder.pl -s UGUGUUCUCAGGUCACCCCUU -d arab_cdna -q miR399a > miR399a_predicted_targets.txt
+```
+./targetfinder.pl -s UGUGUUCUCAGGUCACCCCUU -d arab_cdna -q miR399a > miR399a_predicted_targets.txt
+```
 
 Each predicted target site is printed out separately. The output consists of two parts. The first is a description line and the second is a base-pairing diagram of the target and small RNA (query) sequence. The description line contains the query name (query=name), the description line from the target sequence database (target=target description), and the target prediction score (score=prediction score).
 
-  ex.
- 
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+  example:
+
+``` 
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+```
 
 The base-pairing diagram has the target site sequence on top in 5'-3' orientation and the query sequence on the bottom in 3'-5' orientation. Between the target site sequece and the query sequence are base pair
 symbols. A ":" (colon) symbol represents an ordinary Watson-Crick base pair, a "." (period) represents a G:U base pair, and a " " (space) represents a mismatch.
 
-  ex.
+  example:
 
 ```
 target  5' UAGGGCAAAUCUUCUUUGGCA 3'  
@@ -71,35 +75,37 @@ query   3' GUCCCGUUUAGAGGAAACCGU 5'
 If a small RNA is predicted to target a sequence more than once, each target site will be output as separate output. Below is an example of output for miR399a and its target AT2G33770. miR399a has five
 target sites in the 5'UTR of AT2G33770.
 
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
-  
-  target  5' UAGGGCAAAUCUUCUUUGGCA 3'
-             .:::::::::::.::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
-  
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
-  
-  target  5' UAGGGCAUAUCUCCUUUGGCA 3'
-             .:::::: :::::::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
-  
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
-  
-  target  5' UAGAGCAAAUCUCCUUUGGCA 3'
-             .:: :::::::::::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
-  
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
-  
-  target  5' UUGGGCAAAUCUCCUUUGGCA 3'
-             . :::::::::::::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
-  
-  query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=2.5
-  
-  target  5' UCGAGCAAAUCUCCUUUGGCA 3'
-             . : :::::::::::::::::
-  query   3' GUCCCGUUUAGAGGAAACCGU 5'
+```
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+
+target  5' UAGGGCAAAUCUUCUUUGGCA 3'
+           .:::::::::::.::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+
+target  5' UAGGGCAUAUCUCCUUUGGCA 3'
+           .:::::: :::::::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+
+target  5' UAGAGCAAAUCUCCUUUGGCA 3'
+           .:: :::::::::::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=1.5
+
+target  5' UUGGGCAAAUCUCCUUUGGCA 3'
+           . :::::::::::::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+
+query=miR399a, target=AT2G33770.1 | Symbol: None |  ubiquitin-conjugating enzyme family protein, low similarity to u, score=2.5
+
+target  5' UCGAGCAAAUCUCCUUUGGCA 3'
+           . : :::::::::::::::::
+query   3' GUCCCGUUUAGAGGAAACCGU 5'
+```
 
 Method
 ============
@@ -111,18 +117,18 @@ targetfinder.pl searches for potential miRNA target sites in a FASTA-formated se
 
 FASTA34 is used to identify the best complementary regions between the small RNA query sequence and every sequence in the FASTA-formated sequence database. This script runs FASTA34 with the following settings:
 
-  -n     Forces the small RNA query sequence to be treated as nucleotide sequence.
-  -H     Suppresses the normal histogram output of FASTA34.
-  -Q     Runs FASTA34 in "quiet" mode.
-  -f     Gap opening penalty (set to -16).
-  -g     Gap extention penalty (set to -10).
-  -r     Match reward/mismatch penalty (set to +15/-10).
-  -w     Alignment output line length (set to 100).
-  -W     Additional sequence context in the output (set to 25).
-  -b     The number of alignments to include in the output (set to 100000).
-  -i     Limits FASTA34 alignments to reverse complement matches only.
-  -U     Changes scoring matrix to allow for G:A, T:C, or U:C matches.
-  ktup   Word size for seed matches that FASTA34 uses to build alignments (set to 1).
+  -n     Forces the small RNA query sequence to be treated as nucleotide sequence.  
+  -H     Suppresses the normal histogram output of FASTA34.  
+  -Q     Runs FASTA34 in "quiet" mode.  
+  -f     Gap opening penalty (set to -16).  
+  -g     Gap extention penalty (set to -10).  
+  -r     Match reward/mismatch penalty (set to +15/-10).  
+  -w     Alignment output line length (set to 100).  
+  -W     Additional sequence context in the output (set to 25).  
+  -b     The number of alignments to include in the output (set to 100000).  
+  -i     Limits FASTA34 alignments to reverse complement matches only.  
+  -U     Changes scoring matrix to allow for G:A, T:C, or U:C matches.  
+  ktup   Word size for seed matches that FASTA34 uses to build alignments (set to 1).  
 
 FASTA34 output is read directly into this script.  Each alignment is converted to a RNA duplex by complementing the small RNA query sequence. Each RNA duplex is scored using the following scoring metric and rule set:
 
