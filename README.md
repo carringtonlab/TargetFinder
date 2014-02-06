@@ -41,6 +41,8 @@ Optional Arguments
   
   -c     Prediction score cutoff value (DEFAULT = 4).
   
+  -r     Search reverse strand for targets? (BOOLEAN, DEFAULT=FALSE). Use this option if the database is genomic DNA.
+  
   -h     Shows the help menu.
 
 Output

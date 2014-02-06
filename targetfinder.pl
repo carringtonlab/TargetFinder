@@ -31,7 +31,7 @@ targetfinder.pl - search for potential miRNA target sites in a sequence database
 
 =head1 VERSION
 
-This is version 1.1 of targetfinder.pl
+This is version 1.2 of targetfinder.pl
 
 =head1 REQUIREMENTS
 
@@ -200,7 +200,7 @@ use strict;
 use warnings;
 use File::Temp qw(tempfile tempdir);
 use Getopt::Std;
-use vars qw/ $opt_d $opt_s $opt_q $opt_c $opt_h /;
+use vars qw/ $opt_d $opt_s $opt_q $opt_c $opt_h $opt_r /;
 
 #########################################################
 # Start Variable declarations                           #
@@ -218,7 +218,7 @@ unless (-e $dir) {
 
 my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed);
 
-getopts('d:s:q:c:h');
+getopts('d:s:q:c:hr');
 &var_check();
 
 $sRNA =~ tr/atgcu/ATGCU/;
@@ -265,33 +265,113 @@ $bp{"GG"} = 1;
 
 # Create temporary input file for FASTA34
 my ($input, $infile) = tempfile(DIR=>$dir);
-open ($input, ">$infile");
+open ($input, ">$infile") or die "Cannot open tempfile for FASTA34 input ($infile): $!\n\n";
 print $input "\>$query_name\n$sRNA";
 close $input;
 
 # Run FASTA34
+print STDERR " Running FASTA34... ";
 @fasta = &fasta34($infile, $database);
+print STDERR "done\n";
 
 # Parse FASTA34 results
+print STDERR " Parsing results... ";
 @fasta_parsed = &fasta_parser(@fasta);
+print STDERR "done\n";
 
 # Score alignments
+print STDERR " Scoring alignments... ";
 my @targets = &bp_score(@fasta_parsed);
+print STDERR "done\n";
 
 if (@targets) {
+	print STDERR " Finding additional hits... ";
 	my ($dbase, @additional) = &get_additional($database, @targets);
 	while (@additional) {
 		push @targets, @additional;
 		undef(@additional);
 		($dbase, @additional) = &get_additional($dbase, @targets);
 	}
+	print STDERR "done\n";
+
+	# Get target site coorinates
+	print STDERR " Getting target site coordinates... ";
+	@targets = get_coords($database, 1, @targets);
+	print STDERR "done\n";
+
+	if ($opt_r) {
+		print STDERR " Creating reverse database... ";
+		my ($rev, $revdb) = tempfile(DIR=>$dir);
+		open ($rev, ">$revdb") or die "Cannot open tempfile for reverse database ($revdb): $!\n\n";
+		my ($name, $seq);
+		open (DB, $database) or die "Cannot open input database ($database): $!\n\n";
+		my $step = 0;
+		while (my $line = <DB>) {
+			chomp $line;
+			if ($step == 0) {
+				if ($line =~ /\>(.+)/) {
+					$name = $1;
+					$step = 1;
+				}
+			} elsif ($step == 1) {
+				if ($line =~ /\>(.+)/ || eof(DB)) {
+					if (eof(DB)) {
+						$seq .= $line;
+					}
+					$seq = reverse($seq);
+					$seq =~ tr/AGTC/TCAG/;
+					print $rev "\>$name\n$seq\n";
+					next if (eof(DB));
+					$name = $1;
+					undef($seq);
+				} else {
+					$seq .= $line;
+				}
+			}
+		}
+		close DB;
+		close $rev;
+		print STDERR "done\n";
+		
+		# Run FASTA34
+		print STDERR " Running FASTA34 on reverse database... ";
+		@fasta = &fasta34($infile, $revdb);
+		print STDERR "done\n";
+
+		# Parse FASTA34 results
+		print STDERR " Parsing reverse results... ";
+		@fasta_parsed = &fasta_parser(@fasta);
+		print STDERR "done\n";
+
+		# Score alignments
+		print STDERR " Scoring reverse alignments... ";
+		my @rev_targets = &bp_score(@fasta_parsed);
+		print STDERR "done\n";
+		if (@rev_targets) {
+			print STDERR " Finding additional reverse targets... ";
+			my ($dbase, @additional) = &get_additional($revdb, @rev_targets);
+			while (@additional) {
+				push @rev_targets, @additional;
+				undef(@additional);
+				($dbase, @additional) = &get_additional($dbase, @rev_targets);
+			}
+			print STDERR "done\n";
+			# Get target site coorinates
+			print STDERR " Getting coordinates for reverse targets... ";
+			@rev_targets = get_coords($revdb, -1, @rev_targets);
+			push @targets, @rev_targets;
+			print STDERR "done\n";
 	
+		}
+	}
+
 	# Sort output
-	my @sorted = sort by_scores @targets;
+	@targets = sort by_scores(@targets);
 	
 	# Print results
-	foreach my $line (@sorted) {
-		print "query=$line->{'query_name'}, target=$line->{'hit_accession'}, score=$line->{'score'}\n\n";
+	foreach my $line (@targets) {
+		print "query=$line->{'query_name'}, target=$line->{'hit_accession'}, score=$line->{'score'}, ";
+		print "range=$line->{'target_start'}\-$line->{'target_end'}, strand=$line->{'target_strand'}\n\n";
 		print "target  5' $line->{'target_seq'} 3'\n";
 		print "           $line->{'homology_string'}\n";
 		print "query   3' $line->{'miR_seq'} 5'\n\n";
@@ -454,6 +534,9 @@ sub bp_score {
 			$hash{'target_seq'} = $target_seq;
 			$hash{'score'} = $score;
 			$hash{'homology_string'} = reverse $homology_string;
+			$hash{'target_start'} = 0;
+			$hash{'target_end'} = 0;
+			$hash{'target_strand'} = 0;
 			push @output, \%hash;
 		}
 	}
@@ -464,11 +547,11 @@ sub bp_score {
 sub get_additional {
 	my ($db, @found) = @_;
 	my ($fh, $filename) = tempfile(DIR=>$dir);
-	open ($fh, ">$filename");
+	open ($fh, ">$filename") or die "Cannot open tempfile for additional hits database ($filename): $!\n\n";
 	my $step = 0;
 	my $id;
 	my $seq;
-	open (DB, $db) or die "Cannot open $db: $!\n\n";
+	open (DB, $db) or die "Cannot open previous database ($db): $!\n\n";
 	while (my $line = <DB>) {
 		chomp $line;
 		if ($step == 0) {
@@ -510,7 +593,8 @@ sub get_additional {
 						for (1..$length) {
 							$mask .= 'N';
 						}
-						$seq =~ s/$hit_seq/$mask/;
+						#$seq =~ s/$hit_seq/$mask/;
+						$seq =~ s/$hit_seq/$mask/i;
 					}
 				}
 				if ($match > 0) {
@@ -527,15 +611,73 @@ sub get_additional {
 	@fasta = &fasta34($infile, $filename);
 	@fasta_parsed = &fasta_parser(@fasta);
 	my @results = &bp_score(@fasta_parsed);
-	if ($db ne $database) {
-		unlink $db;
-	}
+	#if ($db ne $database) {
+	#	unlink $db;
+	#}
 	if (!@results) {
 		unlink $filename;
 	} else {
 		$db = $filename;
 	}
 	return ($db, @results);
+}
+
+sub get_coords {
+	my ($db, $strand, @found) = @_;
+	my (%db, $name, $seq);
+	open (DB, $db) or die "Cannot open sequence database ($db): $!\n\n";
+	my $step = 0;
+	while (my $line = <DB>) {
+		chomp $line;
+		if ($step == 0) {
+			if ($line =~ /\>(.+)/) {
+				$name = $1;
+				$step = 1;
+			}
+		} elsif ($step == 1) {
+			if ($line =~ /\>(.+)/ || eof(DB)) {
+				if (eof(DB)) {
+					$seq .= $line;
+				}
+				$db{$name} = $seq;
+				next if (eof(DB));
+				$name = $1;
+				undef($seq);
+			} else {
+				$seq .= $line;
+			}
+		}
+	}
+	close DB;
+	foreach my $hit (@found) {
+		my $seq = $db{$hit->{'hit_accession'}};
+		my $hit_seq = $hit->{'target_seq'};
+		$hit_seq =~ s/\-//g;
+		$hit_seq =~ s/U/T/g;
+		my $length = length($hit_seq);
+		my $offset;
+		if ($strand == 1) {
+			if ($seq =~ /^(.*)$hit_seq/i) {
+				$offset = length($1);
+				$hit->{'target_start'} = (length($1) + 1);
+				$hit->{'target_end'} = ($hit->{'target_start'} + $length - 1);
+			}
+		} elsif ($strand == -1) {
+			if ($seq =~ /(.*)$hit_seq(.*)$/) {
+				$offset = length($1);
+				$hit->{'target_start'} = (length($2) + 1);
+				$hit->{'target_end'} = ($hit->{'target_start'} + $length - 1);
+			}
+		}
+		my $mask;
+		for (1..$length) {
+			$mask .= 'N';
+		}
+		substr($seq,$offset,$length,$mask);
+		$db{$hit->{'hit_accession'}} = $seq;
+		$hit->{'target_strand'} = $strand;
+	}
+	return @found;
 }
 
 # Sort output by score, acsending
@@ -590,6 +732,7 @@ sub var_error {
 	print " OPTIONAL:\n";
 	print " -q     Query sequence name (DEFAULT = query)\n";
 	print " -c     Score cutoff value (DEFAULT = 4)\n";
+	print " -r     Search reverse strand for targets? (BOOLEAN, DEFAULT=FALSE)\n";
 	print " -h     Show this menu\n\n";
 	print " Type perldoc targetfinder.pl for more help.\n";
 	print "\n\n";
