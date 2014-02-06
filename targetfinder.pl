@@ -76,6 +76,7 @@ use warnings;
 use File::Temp qw(tempfile tempdir);
 use Getopt::Std;
 use vars qw/ $opt_d $opt_s $opt_q $opt_c $opt_h $opt_r /;
+use constant DEBUG => 0;
 
 #########################################################
 # Start Variable declarations                           #
@@ -84,7 +85,7 @@ use vars qw/ $opt_d $opt_s $opt_q $opt_c $opt_h $opt_r /;
 # Get environment variables
 my $home_dir = $ENV{'HOME'};   # Location of home directory, base directory where temporary directory will be created
 #my $fasta34 = $ENV{'FASTA34'}; # Location of the fasta34 binary
-my $fasta34 = "fasta34";
+my $fasta = "fasta35";
 
 # Creates a temporary directory, unless it exists
 my $dir = "$home_dir/tmp";
@@ -92,10 +93,16 @@ unless (-e $dir) {
 	system "mkdir $home_dir/tmp";  # Note that mkdir must be in your PATH variable
 }
 
+if (DEBUG) {
+	open (LOG, ">targetfinder.log") or die " Cannot open targetfinder.log: $!\n\n";
+}
+
 my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed);
 
 getopts('d:s:q:c:hr');
 &var_check();
+
+my @tempfileList;
 
 $sRNA =~ tr/atgcu/ATGCU/;
 
@@ -103,6 +110,9 @@ $sRNA =~ tr/atgcu/ATGCU/;
 if ($query_name =~ /(.{1,5})/) {
 	$name = $1;
 }
+
+print LOG "Small RNA = $sRNA\n" if (DEBUG);
+print LOG "Query name = $query_name\n" if (DEBUG);
 
 # miRNA-target alignment scoring matrix
 my %bp;
@@ -141,16 +151,18 @@ $bp{"GG"} = 1;
 
 # Create temporary input file for FASTA34
 my ($input, $infile) = tempfile(DIR=>$dir);
+print LOG "Creating temporary file $infile\n" if (DEBUG);
 open ($input, ">$infile") or die "Cannot open tempfile for FASTA34 input ($infile): $!\n\n";
+push (@tempfileList,$infile);
 print $input "\>$query_name\n$sRNA";
 close $input;
 
-# Run FASTA34
-print STDERR " Running FASTA34... ";
-@fasta = &fasta34($infile, $database);
+# Run FASTA
+print STDERR " Running $fasta... ";
+@fasta = &fasta($infile, $database);
 print STDERR "done\n";
 
-# Parse FASTA34 results
+# Parse FASTA results
 print STDERR " Parsing results... ";
 @fasta_parsed = &fasta_parser(@fasta);
 print STDERR "done\n";
@@ -180,6 +192,7 @@ if ($opt_r) {
 	print STDERR " Creating reverse database... ";
 	my ($rev, $revdb) = tempfile(DIR=>$dir);
 	open ($rev, ">$revdb") or die "Cannot open tempfile for reverse database ($revdb): $!\n\n";
+	push (@tempfileList,$revdb);
 	my ($name, $seq);
 	open (DB, $database) or die "Cannot open input database ($database): $!\n\n";
 	my $step = 0;
@@ -210,12 +223,12 @@ if ($opt_r) {
 	close $rev;
 	print STDERR "done\n";
 	
-	# Run FASTA34
+	# Run FASTA
 	print STDERR " Running FASTA34 on reverse database... ";
-	@fasta = &fasta34($infile, $revdb);
+	@fasta = &fasta($infile, $revdb);
 	print STDERR "done\n";
 
-	# Parse FASTA34 results
+	# Parse FASTA results
 	print STDERR " Parsing reverse results... ";
 	@fasta_parsed = &fasta_parser(@fasta);
 	print STDERR "done\n";
@@ -257,7 +270,10 @@ if (@targets) {
 	print "No results for $query_name\n";
 }
 
-unlink $infile;
+#remove all of the temporary files
+foreach my $fname (@tempfileList){
+	unlink "$fname";
+}
 exit;
 
 #########################################################
@@ -268,21 +284,25 @@ exit;
 # Start Subroutines                                     #
 #########################################################
 
-# Run FASTA34
-sub fasta34 {
+# Run FASTA
+sub fasta {
+	print LOG "Running $fasta...\n" if (DEBUG);
 	my $input = shift;
 	my $db = shift;
 	my @output;
-	open FASTA, "$fasta34 -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -b 100000 -i -U $input $db 1 |";
+#	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -b 100000 -i -U $input $db 1 |";
+	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U $input $db 1 |";
 	while (<FASTA>) {
+		print LOG $_ if (DEBUG);
 		push (@output, $_);
 	}
 	close FASTA;
 	return @output;
 }
 
-# Parse FASTA34 output
+# Parse FASTA output
 sub fasta_parser {
+	print LOG "Parse results...\n" if (DEBUG);
 	my @input = @_;
 	my $hit_accession;
 	my $id;
@@ -305,6 +325,7 @@ sub fasta_parser {
 					$hit_accession =~ s/\s$//g;
 				}
 				$step = 1;
+				print LOG "     HIT ACCESSION = $hit_accession\n" if (DEBUG);
 			}
 		} elsif ($step == 1) {
 			if ($line =~ /($name\-\s+)\b(\D+)\b/) {
@@ -314,10 +335,12 @@ sub fasta_parser {
 				$miRNA =~ s/\s//g;
 				$length = length $miRNA;
 				$miRNA =~ tr/AUGC/UACG/;
+				print LOG "     miRNA = $miRNA\n" if (DEBUG);
 			} elsif ($line =~ /$id\s+/) {
 				if ($line =~ /.{$count}(\D{$length})/) {
 					$target = $1;
 					$target =~ s/\s//g;
+					print LOG "     TARGET = $target\n" if (DEBUG);
 				}
 				push @output, "$hit_accession\t$miRNA\t$target";
 				$step = 0;
@@ -328,8 +351,9 @@ sub fasta_parser {
 	return @output;
 }
 
-# Score FASTA34 alignments
+# Score FASTA alignments
 sub bp_score {
+	print LOG "Score alignments...\n" if (DEBUG);
 	my @input = @_;
 	my $counter = 0;
 	my @output;
@@ -425,6 +449,7 @@ sub get_additional {
 	my ($db, @found) = @_;
 	my ($fh, $filename) = tempfile(DIR=>$dir);
 	open ($fh, ">$filename") or die "Cannot open tempfile for additional hits database ($filename): $!\n\n";
+	push (@tempfileList,$filename);
 	my $step = 0;
 	my $id;
 	my $seq;
@@ -485,7 +510,7 @@ sub get_additional {
 		}
 	}
 	close $fh;
-	@fasta = &fasta34($infile, $filename);
+	@fasta = &fasta($infile, $filename);
 	@fasta_parsed = &fasta_parser(@fasta);
 	my @results = &bp_score(@fasta_parsed);
 	#if ($db ne $database) {
@@ -599,8 +624,8 @@ sub var_check {
 		print " ERROR: environmental variable 'HOME' not set\n";
 		&var_error();
 	}
-	if (!defined($fasta34)) {
-		print " ERROR: environmental variable 'FASTA34' not set\n";
+	if (!defined($fasta)) {
+		print " ERROR: environmental variable 'FASTA' not set\n";
 		&var_error();
 	}
 }

@@ -15,14 +15,14 @@ Minimum Requirements
 
 * Required Software Packages:
   * Perl (v5.8+)
-  * FASTA34 binaries from (http://fasta.bioch.virginia.edu/fasta_www2/fasta_down.shtml)
+  * FASTA35 binaries from (http://fasta.bioch.virginia.edu/fasta_www2/fasta_down.shtml)
 
 Installation
 ------------
 
 1.  Make sure that 'mkdir' is in your path.
 2.  Set an environmental variable 'HOME' as the location of your home directory. Note: you must have read/write access to this directory so that a temporary directory can be made.
-3.  Make sure that 'fasta34' is in your path.
+3.  Make sure that 'fasta35' is in your path.
 4.  Make sure that the required modules are in your Perl library path.
 5.  Make sure that targetfinder.pl is executable (use 'chmod' to change privileges).
 
@@ -113,26 +113,26 @@ Method
 ============
 targetfinder.pl searches for potential miRNA target sites in a FASTA-formated sequence database using three main steps.
 
-1.  The small RNA query sequence is aligned to every sequence in the FASTA-formated sequence database using the alignment program FASTA34.
-2.  The FASTA34 alignments are converted into RNA duplexes.
+1.  The small RNA query sequence is aligned to every sequence in the FASTA-formated sequence database using the alignment program FASTA35.
+2.  The FASTA35 alignments are converted into RNA duplexes.
 3.  Each duplex is scored using a position-dependent scoring matrix.
 
-FASTA34 is used to identify the best complementary regions between the small RNA query sequence and every sequence in the FASTA-formated sequence database. This script runs FASTA34 with the following settings:
-
+FASTA35 is used to identify the best complementary regions between the small RNA query sequence and every sequence in the FASTA-formated sequence database. This script runs FASTA35 with the following settings:
+  
   -n     Forces the small RNA query sequence to be treated as nucleotide sequence.  
-  -H     Suppresses the normal histogram output of FASTA34.  
-  -Q     Runs FASTA34 in "quiet" mode.  
+  -H     Suppresses the normal histogram output of FASTA35.  
+  -Q     Runs FASTA35 in "quiet" mode.  
   -f     Gap opening penalty (set to -16).  
   -g     Gap extention penalty (set to -10).  
   -r     Match reward/mismatch penalty (set to +15/-10).  
   -w     Alignment output line length (set to 100).  
   -W     Additional sequence context in the output (set to 25).  
-  -b     The number of alignments to include in the output (set to 100000).  
-  -i     Limits FASTA34 alignments to reverse complement matches only.  
+  -E     The E-value cutoff (set to 100000).  
+  -i     Limits FASTA35 alignments to reverse complement matches only.  
   -U     Changes scoring matrix to allow for G:A, T:C, or U:C matches.  
-  ktup   Word size for seed matches that FASTA34 uses to build alignments (set to 1).  
+  ktup   Word size for seed matches that FASTA35 uses to build alignments (set to 1).  
 
-FASTA34 output is read directly into this script.  Each alignment is converted to a RNA duplex by complementing the small RNA query sequence. Each RNA duplex is scored using the following scoring metric and rule set:
+FASTA35 output is read directly into this script.  Each alignment is converted to a RNA duplex by complementing the small RNA query sequence. Each RNA duplex is scored using the following scoring metric and rule set:
 
 1.  Mismatches, single-nucleotide gaps or single-nucleotide bulges are assesed a penalty of +1.
 2.  G:U base pairs are assessed a penalty of +0.5.
@@ -144,7 +144,10 @@ FASTA34 output is read directly into this script.  Each alignment is converted t
 
 Predicted targets are printed out if they are equal to or lower than the cutoff score specified.
 
+Note: the -i option limits FASTA35 to reverse complement matches only, but you can use the -r option with targetfinder.pl to search both strands of a sequence database. This should be done if the database is a genome sequence so that target sites on both strands can be found.
+
 References
 ============
 1.  Allen E, Xie Z, Gustafson AM, Carrington JC (2005) microRNA-directed phasing during trans-acting siRNA biogenesis in plants. Cell 121: 207Ð221. doi:[10.1016/j.cell.2005.04.004](http://dx.doi.org/10.1016/j.cell.2005.04.004).
 2.  Fahlgren N, Howell MD, Kasschau KD, Chapman EJ, Sullivan CM, Cumbie JS, Givan SA, Law TF, Grant SR, Dangl JL, Carrington JC (2007) High-throughput sequencing of *Arabidopsis* microRNAs: Evidence for frequent birth and death of *MIRNA* genes. PLoS ONE 2: e219. doi:[10.1371/journal.pone.0000219](http://dx.doi.org/10.1371/journal.pone.0000219).
+3.  Fahlgren N, Carrington JC (2010) miRNA Target Prediction in Plants. Methods in molecular biology (Clifton, NJ) 592: 51Ð57. doi:[10.1007/978-1-60327-005-2_4](http://dx.doi.org/10.1007/978-1-60327-005-2_4).
