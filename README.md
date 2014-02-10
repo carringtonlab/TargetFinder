@@ -20,11 +20,10 @@ Minimum Requirements
 Installation
 ------------
 
-1.  Make sure that 'mkdir' is in your path.
-2.  Set an environmental variable 'HOME' as the location of your home directory. Note: you must have read/write access to this directory so that a temporary directory can be made.
-3.  Make sure that 'fasta35' is in your path.
-4.  Make sure that the required modules are in your Perl library path.
-5.  Make sure that targetfinder.pl is executable (use 'chmod' to change privileges).
+1.  TargetFinder uses the environmental variable TMPDIR as a temporary directory. If TMPDIR is undefined TargetFinder tries to use /tmp instead. If you want TargetFinder to write temporary files to a specific place, change the value of TMPDIR.
+2.  Make sure that 'ssearch35_t' is in your path.
+3.  Make sure that the required modules are in your Perl library path.
+4.  Make sure that targetfinder.pl is executable (use 'chmod' to change privileges).
 
 Using TargetFinder
 ============
@@ -113,14 +112,14 @@ Method
 ============
 targetfinder.pl searches for potential miRNA target sites in a FASTA-formated sequence database using three main steps.
 
-1.  The small RNA query sequence is aligned to every sequence in the FASTA-formated sequence database using the alignment program FASTA35.
-2.  The FASTA35 alignments are converted into RNA duplexes.
+1.  The small RNA query sequence is aligned to every sequence in the FASTA-formated sequence database using Smith-Waterman (SW) alignments implemented in the FASTA package (ssearch35_t).
+2.  The SW alignments are converted into RNA duplexes.
 3.  Each duplex is scored using a position-dependent scoring matrix.
 
-FASTA35 is used to identify the best complementary regions between the small RNA query sequence and every sequence in the FASTA-formated sequence database. This script runs FASTA35 with the following settings:
+SW alignments are used to identify the best complementary regions between the small RNA query sequence and every sequence in the FASTA-formated sequence database. This script runs ssearch35_t with the following settings:
   
   -n     Forces the small RNA query sequence to be treated as nucleotide sequence.  
-  -H     Suppresses the normal histogram output of FASTA35.  
+  -H     Suppresses the normal histogram output.  
   -Q     Runs FASTA35 in "quiet" mode.  
   -f     Gap opening penalty (set to -16).  
   -g     Gap extention penalty (set to -10).  
@@ -128,11 +127,11 @@ FASTA35 is used to identify the best complementary regions between the small RNA
   -w     Alignment output line length (set to 100).  
   -W     Additional sequence context in the output (set to 25).  
   -E     The E-value cutoff (set to 100000).  
-  -i     Limits FASTA35 alignments to reverse complement matches only.  
+  -i     Limits SW alignments to reverse complement matches only.  
   -U     Changes scoring matrix to allow for G:A, T:C, or U:C matches.  
-  ktup   Word size for seed matches that FASTA35 uses to build alignments (set to 1).  
+  ktup   Word size for seed matches used to build alignments (set to 1).  
 
-FASTA35 output is read directly into this script.  Each alignment is converted to a RNA duplex by complementing the small RNA query sequence. Each RNA duplex is scored using the following scoring metric and rule set:
+SW output is read directly into this script.  Each alignment is converted to a RNA duplex by complementing the small RNA query sequence. Each RNA duplex is scored using the following scoring metric and rule set:
 
 1.  Mismatches, single-nucleotide gaps or single-nucleotide bulges are assesed a penalty of +1.
 2.  G:U base pairs are assessed a penalty of +0.5.
@@ -144,7 +143,7 @@ FASTA35 output is read directly into this script.  Each alignment is converted t
 
 Predicted targets are printed out if they are equal to or lower than the cutoff score specified.
 
-Note: the -i option limits FASTA35 to reverse complement matches only, but you can use the -r option with targetfinder.pl to search both strands of a sequence database. This should be done if the database is a genome sequence so that target sites on both strands can be found.
+Note: the -i option limits SW to reverse complement matches only, but you can use the -r option with targetfinder.pl to search both strands of a sequence database. This should be done if the database is a genome sequence so that target sites on both strands can be found.
 
 References
 ============

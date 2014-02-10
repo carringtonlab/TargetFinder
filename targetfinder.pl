@@ -1,81 +1,8 @@
 #!/usr/bin/perl
-#########################################################
-#  Target Finder
-#
-#  Copyright 2007 Oregon State University
-#
-#  Noah Fahlgren
-#  Christopher M. Sullivan
-#  Kristin D. Kasschau
-#  James C. Carrington
-#
-#  Department of Botany and Plant Pathology
-#  Center for Genome Research and Biocomputing
-#  Oregon State University
-#  Corvallis, OR 97331
-#
-#  asrp_questions@science.oregonstate.edu
-#
-# This program is not free software; you can NOT redistribute it and/or
-# modify it at all.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#
-#########################################################
-
-=head1 NAME
-
-targetfinder.pl - search for potential miRNA target sites in a sequence database.
-
-=head1 VERSION
-
-See VERSION file.
-
-=head1 REQUIREMENTS
-
-See INSTALL file.
-
-=head1 INSTALL
-
-See INSTALL file.
-
-=head1 INPUT
-
-REQUIRED ARGUMENTS
-
- -s     Small RNA sequence (either RNA or DNA).
- -d     FASTA-formated sequence file containing potential target sequences.
-
-OPTIONAL ARGUMENTS
-
- -q     Query sequence name (DEFAULT = query).
- -c     Prediction score cutoff value (DEFAULT = 4).
- -r     Search reverse strand for targets? (BOOLEAN, DEFAULT=FALSE).
- -h     Shows the help menu.
-
-=head1 OUTPUT
-
-targetfinder.pl writes all output to the terminal (STOUT). To save the output to a file use
-'>' to redirect output to a file.
-
-ex.
-
-./targetfinder.pl -s UGUGUUCUCAGGUCACCCCUU -d arab_cdna -q miR399a > miR399a_predicted_targets.txt
-
-=head1 CONTACT
-
-Copyright 2007 Oregon State University. Please contact targetfinder@cgrb.oregonstate.edu
-for help.
-
-=cut
-
 use strict;
 use warnings;
-use File::Temp qw(tempfile tempdir);
+use File::Temp qw(tempfile);
 use Getopt::Std;
-use vars qw/ $opt_d $opt_s $opt_q $opt_c $opt_h $opt_r /;
 use constant DEBUG => 0;
 
 #########################################################
@@ -83,24 +10,23 @@ use constant DEBUG => 0;
 #########################################################
 
 # Get environment variables
-my $home_dir = $ENV{'HOME'};   # Location of home directory, base directory where temporary directory will be created
-#my $fasta34 = $ENV{'FASTA34'}; # Location of the fasta34 binary
-my $fasta = "fasta35";
-
-# Creates a temporary directory, unless it exists
-my $dir = "$home_dir/tmp";
-unless (-e $dir) {
-	system "mkdir $home_dir/tmp";  # Note that mkdir must be in your PATH variable
+my $dir;
+if ($ENV{'TMPDIR'}) {
+	$dir = $ENV{'TMPDIR'};
+} else {
+	$dir = '/tmp';
 }
+
+my $fasta = "ssearch35_t";
 
 if (DEBUG) {
 	open (LOG, ">targetfinder.log") or die " Cannot open targetfinder.log: $!\n\n";
 }
 
-my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed);
+my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed, %opt);
 
-getopts('d:s:q:c:hr');
-&var_check();
+getopts('d:s:q:c:hr', \%opt);
+var_check();
 
 my @tempfileList;
 
@@ -159,26 +85,26 @@ close $input;
 
 # Run FASTA
 print STDERR " Running $fasta... ";
-@fasta = &fasta($infile, $database);
+@fasta = fasta($infile, $database);
 print STDERR "done\n";
 
 # Parse FASTA results
 print STDERR " Parsing results... ";
-@fasta_parsed = &fasta_parser(@fasta);
+@fasta_parsed = fasta_parser(@fasta);
 print STDERR "done\n";
 
 # Score alignments
 print STDERR " Scoring alignments... ";
-my @targets = &bp_score(@fasta_parsed);
+my @targets = bp_score(@fasta_parsed);
 print STDERR "done\n";
 
 if (@targets) {
 	print STDERR " Finding additional hits... ";
-	my ($dbase, @additional) = &get_additional($database, @targets);
+	my ($dbase, @additional) = get_additional($database, @targets);
 	while (@additional) {
 		push @targets, @additional;
 		undef(@additional);
-		($dbase, @additional) = &get_additional($dbase, @targets);
+		($dbase, @additional) = get_additional($dbase, @targets);
 	}
 	print STDERR "done\n";
 
@@ -188,7 +114,7 @@ if (@targets) {
 	print STDERR "done\n";
 }
 	
-if ($opt_r) {
+if ($opt{'r'}) {
 	print STDERR " Creating reverse database... ";
 	my ($rev, $revdb) = tempfile(DIR=>$dir);
 	open ($rev, ">$revdb") or die "Cannot open tempfile for reverse database ($revdb): $!\n\n";
@@ -225,25 +151,25 @@ if ($opt_r) {
 	
 	# Run FASTA
 	print STDERR " Running FASTA34 on reverse database... ";
-	@fasta = &fasta($infile, $revdb);
+	@fasta = fasta($infile, $revdb);
 	print STDERR "done\n";
 
 	# Parse FASTA results
 	print STDERR " Parsing reverse results... ";
-	@fasta_parsed = &fasta_parser(@fasta);
+	@fasta_parsed = fasta_parser(@fasta);
 	print STDERR "done\n";
 
 	# Score alignments
 	print STDERR " Scoring reverse alignments... ";
-	my @rev_targets = &bp_score(@fasta_parsed);
+	my @rev_targets = bp_score(@fasta_parsed);
 	print STDERR "done\n";
 	if (@rev_targets) {
 		print STDERR " Finding additional reverse targets... ";
-		my ($dbase, @additional) = &get_additional($revdb, @rev_targets);
+		my ($dbase, @additional) = get_additional($revdb, @rev_targets);
 		while (@additional) {
 			push @rev_targets, @additional;
 			undef(@additional);
-			($dbase, @additional) = &get_additional($dbase, @rev_targets);
+			($dbase, @additional) = get_additional($dbase, @rev_targets);
 		}
 		print STDERR "done\n";
 		# Get target site coorinates
@@ -290,7 +216,6 @@ sub fasta {
 	my $input = shift;
 	my $db = shift;
 	my @output;
-#	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -b 100000 -i -U $input $db 1 |";
 	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U $input $db 1 |";
 	while (<FASTA>) {
 		print LOG $_ if (DEBUG);
@@ -510,12 +435,9 @@ sub get_additional {
 		}
 	}
 	close $fh;
-	@fasta = &fasta($infile, $filename);
-	@fasta_parsed = &fasta_parser(@fasta);
-	my @results = &bp_score(@fasta_parsed);
-	#if ($db ne $database) {
-	#	unlink $db;
-	#}
+	@fasta = fasta($infile, $filename);
+	@fasta_parsed = fasta_parser(@fasta);
+	my @results = bp_score(@fasta_parsed);
 	if (!@results) {
 		unlink $filename;
 	} else {
@@ -532,7 +454,6 @@ sub get_coords {
 	while (my $line = <DB>) {
 		chomp $line;
 		if ($step == 0) {
-			#if ($line =~ /\>(.+)/) {
 			if ($line =~ /\>(.{1,94})/) {
 				$name = $1;
 				while ($name =~ /\s$/) {
@@ -541,7 +462,6 @@ sub get_coords {
 				$step = 1;
 			}
 		} elsif ($step == 1) {
-			#if ($line =~ /\>(.+)/ || eof(DB)) {
 			if ($line =~ /\>(.{1,94})/ || eof(DB)) {
 				if (eof(DB)) {
 					$seq .= $line;
@@ -597,56 +517,44 @@ sub by_scores {
 
 # Check options
 sub var_check {
-	if ($opt_s) {
-		$sRNA = $opt_s;
-	} else {
-		&var_error();
+	if ($opt{'h'}) {
+		var_error();
 	}
-	if ($opt_d) {
-		$database = $opt_d;
+	if ($opt{'s'}) {
+		$sRNA = $opt{'s'};
 	} else {
-		&var_error();
+		var_error();
 	}
-	if ($opt_q) {
-		$query_name = $opt_q;
+	if ($opt{'d'}) {
+		$database = $opt{'d'};
+	} else {
+		var_error();
+	}
+	if ($opt{'q'}) {
+		$query_name = $opt{'q'};
 	} else {
 		$query_name = 'query';
 	}
-	if ($opt_c) {
-		$cutoff = $opt_c;
+	if ($opt{'c'}) {
+		$cutoff = $opt{'c'};
 	} else {
 		$cutoff = 4;
-	}
-	if ($opt_h) {
-		&var_error();
-	}
-	if (!$home_dir) {
-		print " ERROR: environmental variable 'HOME' not set\n";
-		&var_error();
-	}
-	if (!defined($fasta)) {
-		print " ERROR: environmental variable 'FASTA' not set\n";
-		&var_error();
 	}
 }
 
 # Print help
 sub var_error {
-	print "\n\n";
-	print " targetfinder.pl will predict potential miRNA target sites using methods described in Allen et al. 2005 and Fahlgren et al. 2007.\n";
-	print " You did not provide enough information\n";
-	print " Usage: targetfinder.pl -s <sequence> -d <target database> [OPTIONS]\n";
-	print " REQUIRED:\n";
-	print " -s     Small RNA sequence\n";
-	print " -d     Target database path (FASTA-format)\n";
-	print " OPTIONAL:\n";
-	print " -q     Query sequence name (DEFAULT = query)\n";
-	print " -c     Score cutoff value (DEFAULT = 4)\n";
-	print " -r     Search reverse strand for targets? (BOOLEAN, DEFAULT=FALSE)\n";
-	print " -h     Show this menu\n\n";
-	print " Type perldoc targetfinder.pl for more help.\n";
-	print "\n\n";
-	exit 0;
+	print STDERR "\n\n";
+	print STDERR "TargetFinder: Plant small RNA target prediction tool.\n\n";
+	print STDERR "Usage:   targetfinder.pl -s <sequence> -d <target database> [options]\n\n";
+	print STDERR "Options: -s <string>  Small RNA sequence (RNA or DNA, 5'->3')\n";
+	print STDERR "         -d <file>    Target database file (FASTA-format)\n";
+	print STDERR "         -q <string>  Query sequence name (DEFAULT = 'query')\n";
+	print STDERR "         -c <float>   Score cutoff value (DEFAULT = 4)\n";
+	print STDERR "         -r           Search reverse strand for targets?\n";
+	print STDERR "         -h           Print this menu\n";
+	print STDERR "\n\n";
+	exit 1;
 }
 
 #########################################################
