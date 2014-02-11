@@ -23,9 +23,9 @@ if (DEBUG) {
 	open (LOG, ">targetfinder.log") or die " Cannot open targetfinder.log: $!\n\n";
 }
 
-my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed, %opt);
+my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed, $threads, %opt);
 
-getopts('d:s:q:c:hr', \%opt);
+getopts('d:s:q:c:t:hr', \%opt);
 var_check();
 
 my @tempfileList;
@@ -216,7 +216,7 @@ sub fasta {
 	my $input = shift;
 	my $db = shift;
 	my @output;
-	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U $input $db 1 |";
+	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U -T $threads $input $db 1 |";
 	while (<FASTA>) {
 		print LOG $_ if (DEBUG);
 		push (@output, $_);
@@ -540,6 +540,12 @@ sub var_check {
 	} else {
 		$cutoff = 4;
 	}
+	if ($opt{'t'}) {
+		$threads = $opt{'t'};
+	} else {
+		$threads = 1;
+	}
+	
 }
 
 # Print help
@@ -547,10 +553,11 @@ sub var_error {
 	print STDERR "\n\n";
 	print STDERR "TargetFinder: Plant small RNA target prediction tool.\n\n";
 	print STDERR "Usage:   targetfinder.pl -s <sequence> -d <target database> [options]\n\n";
-	print STDERR "Options: -s <string>  Small RNA sequence (RNA or DNA, 5'->3')\n";
+	print STDERR "Options: -s <str>     Small RNA sequence (RNA or DNA, 5'->3')\n";
 	print STDERR "         -d <file>    Target database file (FASTA-format)\n";
-	print STDERR "         -q <string>  Query sequence name (DEFAULT = 'query')\n";
+	print STDERR "         -q <str>     Query sequence name (DEFAULT = 'query')\n";
 	print STDERR "         -c <float>   Score cutoff value (DEFAULT = 4)\n";
+	print STDERR "         -t <int>     Threads for parallel Smith-Waterman searches (DEFAULT = 1)\n";
 	print STDERR "         -r           Search reverse strand for targets?\n";
 	print STDERR "         -h           Print this menu\n";
 	print STDERR "\n\n";
