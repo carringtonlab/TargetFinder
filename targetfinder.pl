@@ -85,38 +85,38 @@ print $input "\>$query_name\n$sRNA";
 close $input;
 
 # Run FASTA
-print STDERR " Running $fasta... ";
+print LOG " Running $fasta... " if (DEBUG);
 @fasta = fasta($infile, $database);
-print STDERR "done\n";
+print LOG "done\n" if (DEBUG);
 
 # Parse FASTA results
-print STDERR " Parsing results... ";
+print LOG " Parsing results... " if (DEBUG);
 @fasta_parsed = fasta_parser(@fasta);
-print STDERR "done\n";
+print LOG "done\n" if (DEBUG);
 
 # Score alignments
-print STDERR " Scoring alignments... ";
+print LOG " Scoring alignments... " if (DEBUG);
 my @targets = bp_score(@fasta_parsed);
-print STDERR "done\n";
+print LOG "done\n" if (DEBUG);
 
 if (@targets) {
-	print STDERR " Finding additional hits... ";
+	print LOG " Finding additional hits... " if (DEBUG);
 	my ($dbase, @additional) = get_additional($database, @targets);
 	while (@additional) {
 		push @targets, @additional;
 		undef(@additional);
 		($dbase, @additional) = get_additional($dbase, @targets);
 	}
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 
 	# Get target site coorinates
-	print STDERR " Getting target site coordinates... ";
+	print LOG " Getting target site coordinates... " if (DEBUG);
 	@targets = get_coords($database, 1, @targets);
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 }
 	
 if ($opt{'r'}) {
-	print STDERR " Creating reverse database... ";
+	print LOG " Creating reverse database... " if (DEBUG);
 	my ($rev, $revdb) = tempfile(DIR=>$dir);
 	open ($rev, ">$revdb") or die "Cannot open tempfile for reverse database ($revdb): $!\n\n";
 	push (@tempfileList,$revdb);
@@ -148,36 +148,36 @@ if ($opt{'r'}) {
 	}
 	close DB;
 	close $rev;
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 	
 	# Run FASTA
-	print STDERR " Running FASTA34 on reverse database... ";
+	print LOG " Running FASTA34 on reverse database... " if (DEBUG);
 	@fasta = fasta($infile, $revdb);
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 
 	# Parse FASTA results
-	print STDERR " Parsing reverse results... ";
+	print LOG " Parsing reverse results... " if (DEBUG);
 	@fasta_parsed = fasta_parser(@fasta);
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 
 	# Score alignments
-	print STDERR " Scoring reverse alignments... ";
+	print LOG " Scoring reverse alignments... " if (DEBUG);
 	my @rev_targets = bp_score(@fasta_parsed);
-	print STDERR "done\n";
+	print LOG "done\n" if (DEBUG);
 	if (@rev_targets) {
-		print STDERR " Finding additional reverse targets... ";
+		print LOG " Finding additional reverse targets... " if (DEBUG);
 		my ($dbase, @additional) = get_additional($revdb, @rev_targets);
 		while (@additional) {
 			push @rev_targets, @additional;
 			undef(@additional);
 			($dbase, @additional) = get_additional($dbase, @rev_targets);
 		}
-		print STDERR "done\n";
+		print LOG "done\n" if (DEBUG);
 		# Get target site coorinates
-		print STDERR " Getting coordinates for reverse targets... ";
+		print LOG " Getting coordinates for reverse targets... " if (DEBUG);
 		@rev_targets = get_coords($revdb, -1, @rev_targets);
 		push @targets, @rev_targets;
-		print STDERR "done\n";
+		print LOG "done\n" if (DEBUG);
 
 	}
 }
@@ -221,7 +221,7 @@ sub fasta {
 	my $input = shift;
 	my $db = shift;
 	my @output;
-	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U -T $threads $input $db 1 |";
+	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U -T $threads $input $db 1 2> /dev/null |";
 	while (<FASTA>) {
 		print LOG $_ if (DEBUG);
 		push (@output, $_);
