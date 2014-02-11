@@ -30,19 +30,21 @@ Using TargetFinder
 
 Required arguments
 ------------
-  -s     Small RNA sequence (either RNA or DNA).
+  -s <string>    Small RNA sequence (RNA or DNA, 5'->3').
   
-  -d     FASTA-formated sequence file containing potential target sequences.
+  -d <file>      Target sequence database file (FASTA-format).
 
 Optional Arguments
 ------------
-  -q     Query sequence name (DEFAULT = query).
+  -q <string>    Query sequence name (DEFAULT = query).
   
-  -c     Prediction score cutoff value (DEFAULT = 4).
+  -c <float>     Prediction score cutoff value (DEFAULT = 4).
   
-  -r     Search reverse strand for targets? (BOOLEAN, DEFAULT=FALSE). Use this option if the database is genomic DNA.
+  -t <int>       Threads for parallel Smith-Waterman searches (DEFAULT = 1).
   
-  -h     Shows the help menu.
+  -r             Search reverse strand for targets?. Use this option if the database is genomic DNA.
+  
+  -h             Shows the help menu.
 
 Output
 ------------
@@ -144,6 +146,35 @@ SW output is read directly into this script.  Each alignment is converted to a R
 Predicted targets are printed out if they are equal to or lower than the cutoff score specified.
 
 Note: the -i option limits SW to reverse complement matches only, but you can use the -r option with targetfinder.pl to search both strands of a sequence database. This should be done if the database is a genome sequence so that target sites on both strands can be found.
+
+Additional Tools
+============
+targetfinder_threads.pl
+------------
+Executes parallel TargetFinder jobs using Perl interpreter threads.
+
+Requirements
+------------
+1.  Requires Perl 5.10.0 or higher.
+2.  Requires the Perl threads and Thread::Queue modules.
+
+Required arguments
+------------
+  -f <file>      Input small RNA sequences file (FASTA-format).
+  
+  -d <file>      Target sequence database file (FASTA-format).
+  
+  -o <file>      Output file. Stores collective results.
+
+Optional Arguments
+------------
+  -c <float>     Prediction score cutoff value (DEFAULT = 4).
+  
+  -t <int>       Number of TargetFinder threads/CPUs to use (DEFAULT = 1).
+  
+  -r             Search reverse strand for targets?. Use this option if the database is genomic DNA.
+  
+  -h             Shows the help menu.
 
 References
 ============

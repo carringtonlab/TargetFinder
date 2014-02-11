@@ -585,11 +585,11 @@ sub var_error {
 	print STDERR "TargetFinder: Plant small RNA target prediction tool.\n\n";
 	print STDERR "Usage:   targetfinder.pl -s <sequence> -d <target database> [options]\n\n";
 	print STDERR "Options: -s <str>     Small RNA sequence (RNA or DNA, 5'->3')\n";
-	print STDERR "         -d <file>    Target database file (FASTA-format)\n";
+	print STDERR "         -d <file>    Target sequence database file (FASTA-format)\n";
 	print STDERR "         -q <str>     Query sequence name (DEFAULT = 'query')\n";
-	print STDERR "         -c <float>   Score cutoff value (DEFAULT = 4)\n";
+	print STDERR "         -c <float>   Prediction score cutoff value (DEFAULT = 4)\n";
 	print STDERR "         -t <int>     Threads for parallel Smith-Waterman searches (DEFAULT = 1)\n";
-	print STDERR "         -r           Search reverse strand for targets?\n";
+	print STDERR "         -r           Search reverse strand for targets?. Use this option if the database is genomic DNA.\n";
 	print STDERR "         -h           Print this menu\n";
 	print STDERR "\n\n";
 	exit 1;
