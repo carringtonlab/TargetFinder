@@ -5,9 +5,9 @@ use File::Temp qw(tempfile);
 use Getopt::Std;
 use constant DEBUG => 0;
 
-#########################################################
-# Start Variable declarations                           #
-#########################################################
+################################################################################
+# Begin variable declarations
+################################################################################
 
 # Get environment variables
 my $dir;
@@ -17,6 +17,7 @@ if ($ENV{'TMPDIR'}) {
 	$dir = '/tmp';
 }
 
+# Smith-Waterman alignment programs (with threads)
 my $fasta = "ssearch35_t";
 
 if (DEBUG) {
@@ -67,13 +68,13 @@ $bp{"UU"} = 1;
 $bp{"CC"} = 1;
 $bp{"GG"} = 1;
 
-#########################################################
-# End Variable declarations                             #
-#########################################################
+################################################################################
+# End variable declarations
+################################################################################
 
-#########################################################
-# Start Main body of Program                            #
-#########################################################
+################################################################################
+# Begin main program
+################################################################################
 
 # Create temporary input file for FASTA34
 my ($input, $infile) = tempfile(DIR=>$dir);
@@ -202,15 +203,19 @@ foreach my $fname (@tempfileList){
 }
 exit;
 
-#########################################################
-# End Main body of Program                              #
-#########################################################
+################################################################################
+# End main program
+################################################################################
 
-#########################################################
-# Start Subroutines                                     #
-#########################################################
+################################################################################
+# Begin subroutines
+################################################################################
 
-# Run FASTA
+########################################
+# Function: fasta
+#      Execute the Smith-Waterman
+#      alignment program
+########################################
 sub fasta {
 	print LOG "Running $fasta...\n" if (DEBUG);
 	my $input = shift;
@@ -225,7 +230,10 @@ sub fasta {
 	return @output;
 }
 
-# Parse FASTA output
+########################################
+# Function: fasta_parser
+#     Parse results from FASTA/SW output
+########################################
 sub fasta_parser {
 	print LOG "Parse results...\n" if (DEBUG);
 	my @input = @_;
@@ -276,7 +284,10 @@ sub fasta_parser {
 	return @output;
 }
 
-# Score FASTA alignments
+########################################
+# Function: bp_score
+#     Score alignments for base-pairing
+########################################
 sub bp_score {
 	print LOG "Score alignments...\n" if (DEBUG);
 	my @input = @_;
@@ -369,7 +380,11 @@ sub bp_score {
 	return @output;
 }
 
-# Look for additional target sites in identified targets
+########################################
+# Function: get_additional
+#     Look for additional target sites
+#     in identified target sequences
+########################################
 sub get_additional {
 	my ($db, @found) = @_;
 	my ($fh, $filename) = tempfile(DIR=>$dir);
@@ -446,6 +461,11 @@ sub get_additional {
 	return ($db, @results);
 }
 
+########################################
+# Function: get_coords
+#     Add target site coordinate data
+#     to results
+########################################
 sub get_coords {
 	my ($db, $strand, @found) = @_;
 	my (%db, $name, $seq);
@@ -510,12 +530,20 @@ sub get_coords {
 	return @found;
 }
 
-# Sort output by score, acsending
+########################################
+# Function: by_score
+#     Sort results by score, best to worst
+########################################
 sub by_scores {
 	$a->{'score'} <=> $b->{'score'}
 }
 
-# Check options
+########################################
+# Function: var_check
+#     Direct input arguments to the
+#     correct variables and check for
+#     missing arguments
+########################################
 sub var_check {
 	if ($opt{'h'}) {
 		var_error();
@@ -548,7 +576,10 @@ sub var_check {
 	
 }
 
-# Print help
+########################################
+# Function: var_error
+#     Error message/instructions to print
+########################################
 sub var_error {
 	print STDERR "\n\n";
 	print STDERR "TargetFinder: Plant small RNA target prediction tool.\n\n";
@@ -564,6 +595,6 @@ sub var_error {
 	exit 1;
 }
 
-#########################################################
-# End Subroutines                                       #
-#########################################################
+################################################################################
+# End subroutines
+################################################################################
