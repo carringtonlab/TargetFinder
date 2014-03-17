@@ -24,9 +24,9 @@ if (DEBUG) {
 	open (LOG, ">targetfinder.log") or die " Cannot open targetfinder.log: $!\n\n";
 }
 
-my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed, $threads, %opt);
+my ($sRNA, $query_name, $database, $cutoff, $name, @fasta, @fasta_parsed, $threads, $format, %opt);
 
-getopts('d:s:q:c:t:hr', \%opt);
+getopts('d:s:q:c:t:p:hr', \%opt);
 var_check();
 
 my @tempfileList;
@@ -181,18 +181,29 @@ if ($opt{'r'}) {
 
 	}
 }
+
 if (@targets) {
 	# Sort output
 	@targets = sort by_scores(@targets);
 	
 	# Print results
-	foreach my $line (@targets) {
-		print "query=$line->{'query_name'}, target=$line->{'hit_accession'}, score=$line->{'score'}, ";
-		print "range=$line->{'target_start'}\-$line->{'target_end'}, strand=$line->{'target_strand'}\n\n";
-		print "target  5' $line->{'target_seq'} 3'\n";
-		print "           $line->{'homology_string'}\n";
-		print "query   3' $line->{'miR_seq'} 5'\n\n";
+	if ($format eq 'classic') {
+		print_classic(@targets);
+	} elsif ($format eq 'gff') {
+		print_gff(@targets);
+	} elsif ($format eq 'json') {
+		print_json(@targets);
+	} elsif ($format eq 'table') {
+		print_table(@targets);
 	}
+	
+	#foreach my $line (@targets) {
+	#	print "query=$line->{'query_name'}, target=$line->{'hit_accession'}, score=$line->{'score'}, ";
+	#	print "range=$line->{'target_start'}\-$line->{'target_end'}, strand=$line->{'target_strand'}\n\n";
+	#	print "target  5' $line->{'target_seq'} 3'\n";
+	#	print "           $line->{'homology_string'}\n";
+	#	print "query   3' $line->{'miR_seq'} 5'\n\n";
+	#}
 } else {
 	print "No results for $query_name\n";
 }
@@ -539,6 +550,128 @@ sub by_scores {
 }
 
 ########################################
+# Function: print_classic
+#     Format output in 'classic' format
+########################################
+sub print_classic {
+	my @targets = @_;
+	
+	# Print results
+	foreach my $target (@targets) {
+		print "query=$target->{'query_name'}, target=$target->{'hit_accession'}, score=$target->{'score'}, ";
+		print "range=$target->{'target_start'}\-$target->{'target_end'}, strand=$target->{'target_strand'}\n\n";
+		print "target  5' $target->{'target_seq'} 3'\n";
+		print "           $target->{'homology_string'}\n";
+		print "query   3' $target->{'miR_seq'} 5'\n\n";
+	}
+}
+
+########################################
+# Function: print_gff
+#     Format output in GFF format
+########################################
+sub print_gff {
+	my @targets = @_;
+	
+	# Print results
+	foreach my $target (@targets) {
+		
+		# Format strand
+		$target->{'target_strand'} = ($target->{'target_strand'} == 1) ? '+' : '-';
+		
+		## Split ID and description, if possible
+		#my @tmp = split /\s*\|\s*/, $target->{'hit_accession'};
+		#my $id = shift(@tmp);
+		#my $desc = join(' | ', @tmp);
+		
+		print $target->{'hit_accession'}."\t"; # Reference sequence
+		#print $id."\t";                        # Reference sequence
+		print "targetfinder\t";                # Source
+		print "rna_target\t";                  # Type
+		print $target->{'target_start'}."\t";  # Start
+		print $target->{'target_end'}."\t";    # End
+		print $target->{'score'}."\t";         # Score
+		print $target->{'target_strand'}."\t"; # Strand
+		print ".\t";                           # Phase
+		print "smallRNA=".$target->{'query_name'}.";"; # Attributes
+		print "target_seq=".$target->{'target_seq'}.";";
+		print "homoogy_string=".$target->{'homology_string'}.";";
+		print "miR_seq=".$target->{'miR_seq'}."\n";
+		#print "description=".$desc."\n"; 
+	}
+}
+
+########################################
+# Function: print_gff
+#     Format output in GFF format
+########################################
+sub print_table {
+	my @targets = @_;
+	
+	# Print results
+	foreach my $target (@targets) {
+		
+		# Format strand
+		$target->{'target_strand'} = ($target->{'target_strand'} == 1) ? '+' : '-';
+		
+		## Split ID and description, if possible
+		#my @tmp = split /\s*\|\s*/, $target->{'hit_accession'};
+		#my $id = shift(@tmp);
+		#my $desc = join(' | ', @tmp);
+		
+		print $target->{'query_name'}."\t";
+		print $target->{'hit_accession'}."\t"; # Reference sequence
+		print $target->{'target_start'}."\t";  # Start
+		print $target->{'target_end'}."\t";    # End
+		print $target->{'target_strand'}."\t"; # Strand
+		print $target->{'score'}."\t";         # Score
+		print $target->{'target_seq'}."\t";
+		print $target->{'homology_string'}."\t";
+		print $target->{'miR_seq'}."\n";
+	}
+}
+
+########################################
+# Function: print_json
+#     Format output in JSON format
+########################################
+sub print_json {
+	my @targets = @_;
+	
+	# Print results
+	my $hit = 0;
+	my @hits;
+	my $query = $targets[0]->{'query_name'};
+	print "{\n";
+	print '  "'.$query.'": {'."\n";
+	print '    "hits:" {'."\n";
+	foreach my $target (@targets) {
+		my $json;
+		# Format strand
+		$target->{'target_strand'} = ($target->{'target_strand'} == 1) ? '+' : '-';
+		
+		# Format homology string
+		$target->{'homology_string'} =~ s/ /\&nbsp/g;
+		
+		$json .= '      "hit-'.$hit.'": {'."\n";
+		$json .= '        "hit_accession": "'.$target->{'hit_accession'}.'",'."\n";
+		$json .= '        "score": "'.$target->{'score'}.'",'."\n";
+		$json .= '        "strand": "'.$target->{'target_strand'}.'",'."\n";
+		$json .= '        "target_seq": "'.$target->{'target_seq'}.'",'."\n";
+		$json .= '        "homology_string": "'.$target->{'homology_string'}.'",'."\n";
+		$json .= '        "miR_seq": "'.$target->{'miR_seq'}.'",'."\n";
+		$json .= '        "query_name": "'.$target->{'query_name'}.'"'."\n";
+		$json .= '      }';
+		push @hits, $json;
+		$hit++;
+	}
+	print join(",\n", @hits)."\n";
+	print '    }'."\n";
+	print '  }'."\n";
+	print "}\n";
+}
+
+########################################
 # Function: var_check
 #     Direct input arguments to the
 #     correct variables and check for
@@ -573,6 +706,15 @@ sub var_check {
 	} else {
 		$threads = 1;
 	}
+	if ($opt{'p'}) {
+		$format = $opt{'p'};
+		unless ($format eq 'classic' || $format eq 'gff' || $format eq 'json' || $format eq 'table') {
+			print STDERR "Output format $format is not valid.\n\n";
+			exit 1;
+		}
+	} else {
+		$format = 'classic';
+	}
 	
 }
 
@@ -589,6 +731,11 @@ sub var_error {
 	print STDERR "         -q <str>     Query sequence name (DEFAULT = 'query')\n";
 	print STDERR "         -c <float>   Prediction score cutoff value (DEFAULT = 4)\n";
 	print STDERR "         -t <int>     Threads for parallel Smith-Waterman searches (DEFAULT = 1)\n";
+	print STDERR "         -p <str>     Output format for small RNA-target pairs (DEFAULT = 'classic')\n";
+	print STDERR "                      Available options: 'classic' (Original TargetFinder base-pairing format)\n";
+	print STDERR "                                         'gff'     (Generic Feature Format)\n";
+	print STDERR "                                         'json'    (JavaScript Object Notation)\n";
+	print STDERR "                                         'table'   (Tab-deliminated Format)\n";
 	print STDERR "         -r           Search reverse strand for targets?. Use this option if the database is genomic DNA.\n";
 	print STDERR "         -h           Print this menu\n";
 	print STDERR "\n\n";

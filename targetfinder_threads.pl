@@ -10,9 +10,9 @@ use FindBin qw($Bin);
 # Begin variable declarations
 ################################################################################
 
-my (%opt, $file, $database, $threads, $cutoff, $outfile);
+my (%opt, $file, $database, $threads, $cutoff, $outfile, $format);
 
-getopts('f:t:d:c:o:rh', \%opt);
+getopts('f:t:d:c:o:p:rh', \%opt);
 var_check();
 
 ################################################################################
@@ -43,7 +43,7 @@ close IN;
 my $workq = Thread::Queue->new();
 my $retq = Thread::Queue->new();
 while (my ($name, $seq) = each(%rna)) {
-	my $job = "$Bin/targetfinder.pl -s $seq -d $database -q $name -c $cutoff";
+	my $job = "$Bin/targetfinder.pl -s $seq -d $database -q $name -c $cutoff -p $format";
 	if ($opt{'r'}) {
 		$job .= ' -r';
 	}
@@ -123,6 +123,15 @@ sub var_check {
 	} else {
 		var_error();
 	}
+	if ($opt{'p'}) {
+		$format = $opt{'p'};
+		unless ($format eq 'classic' || $format eq 'gff' || $format eq 'json' || $format eq 'table') {
+			print STDERR "Output format $format is not valid.\n\n";
+			exit 1;
+		}
+	} else {
+		$format = 'classic';
+	}
 }
 
 ########################################
@@ -138,6 +147,11 @@ sub var_error {
 	print STDERR "         -o <file>    Output file. Stores collective results\n";
 	print STDERR "         -c <float>   Prediction score cutoff value (DEFAULT = 4)\n";
 	print STDERR "         -t <int>     Number of TargetFinder threads/CPUs to use (DEFAULT = 1)\n";
+	print STDERR "         -p <str>     Output format for small RNA-target pairs (DEFAULT = 'classic')\n";
+	print STDERR "                      Available options: 'classic' (Original TargetFinder base-pairing format)\n";
+	print STDERR "                                         'gff'     (Generic Feature Format)\n";
+	print STDERR "                                         'json'    (JavaScript Object Notation)\n";
+	print STDERR "                                         'table'   (Tab-deliminated Format)\n";
 	print STDERR "         -r           Search reverse strand for targets?. Use this option if the database is genomic DNA.\n";
 	print STDERR "         -h           Print this menu\n";
 	print STDERR "\n\n";
