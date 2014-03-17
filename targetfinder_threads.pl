@@ -54,17 +54,33 @@ threads->create("targetfinder") for (1 .. $threads);
 
 # Wait for threads to finish
 open(OUT, ">$outfile") or die "Cannot open $outfile: $!.\n\n";
+print OUT "{\n" if ($format eq 'json');
 while (threads->list(threads::running)) {
 	while ($retq->pending) {
 		my $result = $retq->dequeue;
-		print OUT $result;
+		if ($format eq 'json') {
+			my @lines = split /\n/, $result;
+			shift @lines;
+			pop @lines;
+			print OUT join("\n", @lines)."\n";
+		} else {
+			print OUT $result;
+		}
 	}
 	sleep 10;
 }
 while ($retq->pending) {
 	my $result = $retq->dequeue;
-	print OUT $result;
+	if ($format eq 'json') {
+		my @lines = split /\n/, $result;
+		shift @lines;
+		pop @lines;
+		print OUT join("\n", @lines);
+	} else {
+		print OUT $result;	
+	}
 }
+print OUT "\n}\n" if ($format eq 'json');
 close OUT;
 
 ################################################################################

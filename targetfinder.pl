@@ -639,12 +639,11 @@ sub print_json {
 	my @targets = @_;
 	
 	# Print results
-	my $hit = 0;
 	my @hits;
 	my $query = $targets[0]->{'query_name'};
 	print "{\n";
 	print '  "'.$query.'": {'."\n";
-	print '    "hits:" {'."\n";
+	print '    "hits" : {'."\n";
 	foreach my $target (@targets) {
 		my $json;
 		# Format strand
@@ -653,7 +652,7 @@ sub print_json {
 		# Format homology string
 		$target->{'homology_string'} =~ s/ /\&nbsp/g;
 		
-		$json .= '      "hit-'.$hit.'": {'."\n";
+		$json .= '      {'."\n";
 		$json .= '        "hit_accession": "'.$target->{'hit_accession'}.'",'."\n";
 		$json .= '        "score": "'.$target->{'score'}.'",'."\n";
 		$json .= '        "strand": "'.$target->{'target_strand'}.'",'."\n";
@@ -663,7 +662,6 @@ sub print_json {
 		$json .= '        "query_name": "'.$target->{'query_name'}.'"'."\n";
 		$json .= '      }';
 		push @hits, $json;
-		$hit++;
 	}
 	print join(",\n", @hits)."\n";
 	print '    }'."\n";
