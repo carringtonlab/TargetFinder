@@ -643,7 +643,7 @@ sub print_json {
 	my $query = $targets[0]->{'query_name'};
 	print "{\n";
 	print '  "'.$query.'": {'."\n";
-	print '    "hits" : {'."\n";
+	print '    "hits" : ['."\n";
 	foreach my $target (@targets) {
 		my $json;
 		# Format strand
@@ -655,6 +655,7 @@ sub print_json {
 		$json .= '      {'."\n";
 		$json .= '        "hit_accession": "'.$target->{'hit_accession'}.'",'."\n";
 		$json .= '        "score": "'.$target->{'score'}.'",'."\n";
+		$json .= '        "coordinates": "'.$target->{'target_start'}.'-'.$target->{'target_end'}.'",'."\n";
 		$json .= '        "strand": "'.$target->{'target_strand'}.'",'."\n";
 		$json .= '        "target_seq": "'.$target->{'target_seq'}.'",'."\n";
 		$json .= '        "homology_string": "'.$target->{'homology_string'}.'",'."\n";
@@ -664,7 +665,7 @@ sub print_json {
 		push @hits, $json;
 	}
 	print join(",\n", @hits)."\n";
-	print '    }'."\n";
+	print '    ]'."\n";
 	print '  }'."\n";
 	print "}\n";
 }
