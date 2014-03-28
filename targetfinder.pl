@@ -659,7 +659,7 @@ sub print_json {
 		$json .= '        "strand": "'.$target->{'target_strand'}.'",'."\n";
 		$json .= '        "target_seq": "'.$target->{'target_seq'}.'",'."\n";
 		$json .= '        "homology_string": "'.$target->{'homology_string'}.'",'."\n";
-		$json .= '        "miR_seq": "'.$target->{'miR_seq'}.'",'."\n";
+		$json .= '        "miR_seq": "'.$target->{'miR_seq'}.'"'."\n";
 		#$json .= '        "query_name": "'.$target->{'query_name'}.'"'."\n";
 		$json .= '      }';
 		push @hits, $json;
