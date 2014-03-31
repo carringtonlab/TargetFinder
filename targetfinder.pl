@@ -653,13 +653,13 @@ sub print_json {
 		$target->{'homology_string'} =~ s/ /\&nbsp/g;
 		
 		$json .= '      {'."\n";
-		$json .= '        "hit_accession": "'.$target->{'hit_accession'}.'",'."\n";
-		$json .= '        "score": "'.$target->{'score'}.'",'."\n";
-		$json .= '        "coordinates": "'.$target->{'target_start'}.'-'.$target->{'target_end'}.'",'."\n";
-		$json .= '        "strand": "'.$target->{'target_strand'}.'",'."\n";
-		$json .= '        "target_seq": "'.$target->{'target_seq'}.'",'."\n";
-		$json .= '        "homology_string": "'.$target->{'homology_string'}.'",'."\n";
-		$json .= '        "miR_seq": "'.$target->{'miR_seq'}.'"'."\n";
+		$json .= '        "Target accession": "'.$target->{'hit_accession'}.'",'."\n";
+		$json .= '        "Score": "'.$target->{'score'}.'",'."\n";
+		$json .= '        "Coordinates": "'.$target->{'target_start'}.'-'.$target->{'target_end'}.'",'."\n";
+		$json .= '        "Strand": "'.$target->{'target_strand'}.'",'."\n";
+		$json .= '        "Target sequence": "'.$target->{'target_seq'}.'",'."\n";
+		$json .= '        "Base paring": "'.$target->{'homology_string'}.'",'."\n";
+		$json .= '        "amiRNA sequence": "'.$target->{'miR_seq'}.'"'."\n";
 		#$json .= '        "query_name": "'.$target->{'query_name'}.'"'."\n";
 		$json .= '      }';
 		push @hits, $json;
