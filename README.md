@@ -41,7 +41,13 @@ Optional Arguments
   -c <float>     Prediction score cutoff value (DEFAULT = 4).
   
   -t <int>       Threads for parallel Smith-Waterman searches (DEFAULT = 1).
-  
+
+  -p <string>    Output format for small RNA-target pairs (DEFAULT = 'classic')
+                 Available options: 'classic' (Original TargetFinder base-pairing format)
+                                    'gff'     (Generic Feature Format)
+                                    'json'    (JavaScript Object Notation)
+                                    'table'   (Tab-deliminated Format)
+
   -r             Search reverse strand for targets?. Use this option if the database is genomic DNA.
   
   -h             Shows the help menu.
@@ -53,7 +59,7 @@ targetfinder.pl writes all output to the terminal (STOUT). To save the output to
   example:
 
 ```
-./targetfinder.pl -s UGUGUUCUCAGGUCACCCCUU -d arab_cdna -q miR399a > miR399a_predicted_targets.txt
+./targetfinder.pl -s UGCCAAAGGAGAUUUGCCCUG -d arab_cdna -q miR399a > miR399a_predicted_targets.txt
 ```
 
 Each predicted target site is printed out separately. The output consists of two parts. The first is a description line and the second is a base-pairing diagram of the target and small RNA (query) sequence. The description line contains the query name (query=name), the description line from the target sequence database (target=target description), and the target prediction score (score=prediction score).
@@ -110,6 +116,85 @@ target  5' UCGAGCAAAUCUCCUUUGGCA 3'
 query   3' GUCCCGUUUAGAGGAAACCGU 5'
 ```
 
+New Output Options
+------------
+In addition to the output described above ('classic' output), three new output format options were added to TargetFinder.
+
+Generic Feature Format (GFF3):
+```
+./targetfinder.pl -s UGCCAAAGGAGAUUUGCCCUG -d arab_cdna -q miR399a -p gff > miR399a_predicted_targets.gff3
+
+AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN  targetfinder  rna_target  607 627 1.5 + . smallRNA=miR399a;target_seq=UAGGGCAAAUCUUCUUUGGCA;base_pairs=.:::::::::::.::::::::;miR_seq=GUCCCGUUUAGAGGAAACCGU
+AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN  targetfinder  rna_target  740 760 1.5 + . smallRNA=miR399a;target_seq=UAGGGCAUAUCUCCUUUGGCA;base_pairs=.:::::: :::::::::::::;miR_seq=GUCCCGUUUAGAGGAAACCGU
+AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN  targetfinder  rna_target  829 849 1.5 + . smallRNA=miR399a;target_seq=UUGGGCAAAUCUCCUUUGGCA;base_pairs=. :::::::::::::::::::;miR_seq=GUCCCGUUUAGAGGAAACCGU
+AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN  targetfinder  rna_target  943 963 1.5 + . smallRNA=miR399a;target_seq=UAGAGCAAAUCUCCUUUGGCA;base_pairs=.:: :::::::::::::::::;miR_seq=GUCCCGUUUAGAGGAAACCGU
+AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN  targetfinder  rna_target  886 906 2.5 + . smallRNA=miR399a;target_seq=UCGAGCAAAUCUCCUUUGGCA;base_pairs=. : :::::::::::::::::;miR_seq=GUCCCGUUUAGAGGAAACCGU
+```
+
+Tab-deliminated Format:
+```
+miR399a	AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN	607	627	+	1.5	UAGGGCAAAUCUUCUUUGGCA	.:::::::::::.::::::::	GUCCCGUUUAGAGGAAACCGU
+miR399a	AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN	740	760	+	1.5	UAGGGCAUAUCUCCUUUGGCA	.:::::: :::::::::::::	GUCCCGUUUAGAGGAAACCGU
+miR399a	AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN	829	849	+	1.5	UUGGGCAAAUCUCCUUUGGCA	. :::::::::::::::::::	GUCCCGUUUAGAGGAAACCGU
+miR399a	AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN	943	963	+	1.5	UAGAGCAAAUCUCCUUUGGCA	.:: :::::::::::::::::	GUCCCGUUUAGAGGAAACCGU
+miR399a	AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN	886	906	+	2.5	UCGAGCAAAUCUCCUUUGGCA	. : :::::::::::::::::	GUCCCGUUUAGAGGAAACCGU
+```
+
+JavaScript Object Notation Format (JSON):
+```
+{
+  "miR399a": {
+    "hits" : [
+      {
+        "Target accession": "AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN",
+        "Score": "1.5",
+        "Coordinates": "607-627",
+        "Strand": "+",
+        "Target sequence": "UAGGGCAAAUCUUCUUUGGCA",
+        "Base pairing": ".:::::::::::.::::::::",
+        "amiRNA sequence": "GUCCCGUUUAGAGGAAACCGU"
+      },
+      {
+        "Target accession": "AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN",
+        "Score": "1.5",
+        "Coordinates": "740-760",
+        "Strand": "+",
+        "Target sequence": "UAGGGCAUAUCUCCUUUGGCA",
+        "Base pairing": ".::::::&nbsp:::::::::::::",
+        "amiRNA sequence": "GUCCCGUUUAGAGGAAACCGU"
+      },
+      {
+        "Target accession": "AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN",
+        "Score": "1.5",
+        "Coordinates": "829-849",
+        "Strand": "+",
+        "Target sequence": "UUGGGCAAAUCUCCUUUGGCA",
+        "Base pairing": ".&nbsp:::::::::::::::::::",
+        "amiRNA sequence": "GUCCCGUUUAGAGGAAACCGU"
+      },
+      {
+        "Target accession": "AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN",
+        "Score": "1.5",
+        "Coordinates": "943-963",
+        "Strand": "+",
+        "Target sequence": "UAGAGCAAAUCUCCUUUGGCA",
+        "Base pairing": ".::&nbsp:::::::::::::::::",
+        "amiRNA sequence": "GUCCCGUUUAGAGGAAACCGU"
+      },
+      {
+        "Target accession": "AT2G33770.1 | Symbols: UBC24, ATUBC24, PHO2 | phosphate 2 | chr2:14277558-14283040 REVERSE LEN",
+        "Score": "2.5",
+        "Coordinates": "886-906",
+        "Strand": "+",
+        "Target sequence": "UCGAGCAAAUCUCCUUUGGCA",
+        "Base pairing": ".&nbsp:&nbsp:::::::::::::::::",
+        "amiRNA sequence": "GUCCCGUUUAGAGGAAACCGU"
+      }
+    ]
+  }
+}
+```
+
 Method
 ============
 targetfinder.pl searches for potential miRNA target sites in a FASTA-formated sequence database using three main steps.
@@ -122,7 +207,7 @@ SW alignments are used to identify the best complementary regions between the sm
   
   -n     Forces the small RNA query sequence to be treated as nucleotide sequence.  
   -H     Suppresses the normal histogram output.  
-  -Q     Runs FASTA35 in "quiet" mode.  
+  -Q     Runs Smith-Waterman search in "quiet" mode.  
   -f     Gap opening penalty (set to -16).  
   -g     Gap extention penalty (set to -10).  
   -r     Match reward/mismatch penalty (set to +15/-10).  

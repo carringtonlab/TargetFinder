@@ -595,7 +595,7 @@ sub print_gff {
 		print ".\t";                           # Phase
 		print "smallRNA=".$target->{'query_name'}.";"; # Attributes
 		print "target_seq=".$target->{'target_seq'}.";";
-		print "homoogy_string=".$target->{'homology_string'}.";";
+		print "base_pairs=".$target->{'homology_string'}.";";
 		print "miR_seq=".$target->{'miR_seq'}."\n";
 		#print "description=".$desc."\n"; 
 	}
@@ -658,7 +658,7 @@ sub print_json {
 		$json .= '        "Coordinates": "'.$target->{'target_start'}.'-'.$target->{'target_end'}.'",'."\n";
 		$json .= '        "Strand": "'.$target->{'target_strand'}.'",'."\n";
 		$json .= '        "Target sequence": "'.$target->{'target_seq'}.'",'."\n";
-		$json .= '        "Base paring": "'.$target->{'homology_string'}.'",'."\n";
+		$json .= '        "Base pairing": "'.$target->{'homology_string'}.'",'."\n";
 		$json .= '        "amiRNA sequence": "'.$target->{'miR_seq'}.'"'."\n";
 		#$json .= '        "query_name": "'.$target->{'query_name'}.'"'."\n";
 		$json .= '      }';
