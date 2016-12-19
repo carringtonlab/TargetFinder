@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use File::Temp qw(tempfile);
-use File::Which;		
+use File::Which;
 use Getopt::Std;
 use constant DEBUG => 0;
 
@@ -20,12 +20,12 @@ if ($ENV{'TMPDIR'}) {
 
 # Smith-Waterman alignment programs (with threads)
 my $fasta = "ssearch36";
-		
-# Does the executable $fasta exist?		
-my $exists = which($fasta);		
-if (!$exists) {		
-	print STDERR "Aligner $fasta was not found in \$PATH.\n\n";		
-	exit 1;		
+
+# Does the executable $fasta exist?
+my $exists = which($fasta);
+if (!$exists) {
+	print STDERR "Aligner $fasta was not found in \$PATH.\n\n";
+	exit 1;
 }
 
 if (DEBUG) {
