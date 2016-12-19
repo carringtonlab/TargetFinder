@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use File::Temp qw(tempfile);
@@ -19,7 +19,7 @@ if ($ENV{'TMPDIR'}) {
 }
 
 # Smith-Waterman alignment programs (with threads)
-my $fasta = "ssearch35_t";
+my $fasta = "ssearch36";
 
 # Does the executable $fasta exist?
 my $exists = which($fasta);
@@ -240,7 +240,7 @@ sub fasta {
 	my $input = shift;
 	my $db = shift;
 	my @output;
-	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U -T $threads $input $db 1 2> /dev/null |";
+	open FASTA, "$fasta -n -H -Q -f -16 -r +15/-10 -g -10 -w 100 -W 25 -E 100000 -i -U $input $db 1 2> /dev/null |";
 	while (<FASTA>) {
 		print LOG $_ if (DEBUG);
 		push (@output, $_);
@@ -686,7 +686,7 @@ sub print_json {
 ########################################
 sub var_check {
 	if ($opt{'h'}) {
-		var_error();
+		show_help();
 	}
 	if ($opt{'s'}) {
 		$sRNA = $opt{'s'};
@@ -747,6 +747,30 @@ sub var_error {
 	print STDERR "         -h           Print this menu\n";
 	print STDERR "\n\n";
 	exit 1;
+}
+
+########################################
+# Function: show_help
+#     Error message/instructions to print
+########################################
+sub show_help {
+	print "\n\n";
+	print "TargetFinder: Plant small RNA target prediction tool.\n\n";
+	print "Usage:   targetfinder.pl -s <sequence> -d <target database> [options]\n\n";
+	print "Options: -s <str>     Small RNA sequence (RNA or DNA, 5'->3')\n";
+	print "         -d <file>    Target sequence database file (FASTA-format)\n";
+	print "         -q <str>     Query sequence name (DEFAULT = 'query')\n";
+	print "         -c <float>   Prediction score cutoff value (DEFAULT = 4)\n";
+	print "         -t <int>     Threads for parallel Smith-Waterman searches (DEFAULT = 1)\n";
+	print "         -p <str>     Output format for small RNA-target pairs (DEFAULT = 'classic')\n";
+	print "                      Available options: 'classic' (Original TargetFinder base-pairing format)\n";
+	print "                                         'gff'     (Generic Feature Format)\n";
+	print "                                         'json'    (JavaScript Object Notation)\n";
+	print "                                         'table'   (Tab-deliminated Format)\n";
+	print "         -r           Search reverse strand for targets?. Use this option if the database is genomic DNA.\n";
+	print "         -h           Print this menu\n";
+	print "\n\n";
+	exit 0;
 }
 
 ################################################################################

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use Getopt::Std;
@@ -112,7 +112,7 @@ sub targetfinder {
 ########################################
 sub var_check {
 	if ($opt{'h'}) {
-		var_error();
+		show_help();
 	}
 	if ($opt{'f'}) {
 		$file = $opt{'f'};
@@ -174,6 +174,29 @@ sub var_error {
 	exit 1;
 }
 
+########################################
+# Function: show_help
+#     Error message/instructions to print
+########################################
+sub show_help {
+	print "\n\n";
+	print "TargetFinder: Plant small RNA target prediction tool.\n\n";
+	print "Usage:   targetfinder.pl -s <sequence> -d <target database> [options]\n\n";
+	print "Options: -s <str>     Small RNA sequence (RNA or DNA, 5'->3')\n";
+	print "         -d <file>    Target sequence database file (FASTA-format)\n";
+	print "         -q <str>     Query sequence name (DEFAULT = 'query')\n";
+	print "         -c <float>   Prediction score cutoff value (DEFAULT = 4)\n";
+	print "         -t <int>     Threads for parallel Smith-Waterman searches (DEFAULT = 1)\n";
+	print "         -p <str>     Output format for small RNA-target pairs (DEFAULT = 'classic')\n";
+	print "                      Available options: 'classic' (Original TargetFinder base-pairing format)\n";
+	print "                                         'gff'     (Generic Feature Format)\n";
+	print "                                         'json'    (JavaScript Object Notation)\n";
+	print "                                         'table'   (Tab-deliminated Format)\n";
+	print "         -r           Search reverse strand for targets?. Use this option if the database is genomic DNA.\n";
+	print "         -h           Print this menu\n";
+	print "\n\n";
+	exit 0;
+}
 ################################################################################
 # End subroutines
 ################################################################################
